@@ -84,17 +84,15 @@ function View(props: {
       </HStack>
       <HStack padding={{ left: 32 }}>
         <Input
+          inputBehavior="multiline"
           placeholder="Enter comment"
           value={props.node.text}
           fontSize={15}
           fill={props.env.textColor.alpha(0.8).hexa()}
           onTextEditEnd={(e) => {
-            props.nodes.set("root", {
-              userID: user.id,
-              id: "root",
+            props.nodes.set(props.node.id, {
+              ...props.node,
               text: e.characters,
-              updatedAt: getTimestamp(),
-              replies: [],
             });
           }}
         />
@@ -115,17 +113,13 @@ function View(props: {
             </HStack>
             <HStack padding={{ left: 32 }}>
               <Input
-                placeholder="Enter comment"
+                inputBehavior="multiline"
+                placeholder="Empty"
                 value={reply.text}
                 fontSize={15}
                 fill={props.env.textColor.alpha(0.8).hexa()}
                 onTextEditEnd={(e) => {
-                  // reply.set("root", {
-                  //   id: "root",
-                  //   text: e.characters,
-                  //   updatedAt: getTimestamp(),
-                  //   replies: [],
-                  // });
+                  props.nodes.set(reply.id, { ...reply, text: e.characters });
                 }}
               />
             </HStack>
@@ -136,6 +130,7 @@ function View(props: {
       {/* make a reply */}
       <HStack padding={{ left: 64 }}>
         <Input
+          inputBehavior="multiline"
           placeholder="Reply"
           value={""}
           fontSize={15}
