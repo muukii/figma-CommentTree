@@ -1,4 +1,4 @@
-import { HStack, VStack } from "./components";
+import { Conditional, HStack, VStack } from "./components";
 
 const { widget } = figma;
 
@@ -30,12 +30,6 @@ type Environment = {
   textColor: Color;
 };
 
-function getTimestamp() {
-  // get unix timestamp
-  const timestamp = Math.floor(Date.now());
-  return timestamp;
-}
-
 const user: NodeUser = {
   id: figmaUser.id ?? "unknown",
   name: figmaUser.name,
@@ -54,7 +48,7 @@ function UserIndicator(props: { user: NodeUser; environment: Environment }) {
       />
       <Text
         fill={props.environment.textColor.hexa()}
-        fontSize={12}
+        fontSize={15}
         fontWeight={"medium"}
       >
         {props.user.name ?? "Unknown user"}
@@ -74,6 +68,8 @@ function View(props: {
     .filter((node) => node !== undefined)
     .sort((a, b) => (a!.updatedAt < b!.updatedAt ? -1 : 1)) as Node[];
 
+  const showsReplyField = props.node.text.length > 0;
+
   return (
     <VStack spacing={8} fill={props.env.keyColor.hex()} padding={24}>
       <HStack spacing={8} verticalAlignItems="center">
@@ -87,7 +83,7 @@ function View(props: {
           inputBehavior="multiline"
           placeholder="Enter comment"
           value={props.node.text}
-          fontSize={15}
+          fontSize={18}
           fill={props.env.textColor.alpha(0.8).hexa()}
           onTextEditEnd={(e) => {
             props.nodes.set(props.node.id, {
@@ -108,7 +104,7 @@ function View(props: {
                 environment={props.env}
               />
               <Text fill={props.env.textColor.alpha(0.5).hexa()} fontSize={12}>
-                {dateFormat(new Date(props.node.updatedAt), "default")}
+                {dateFormat(new Date(reply.updatedAt), "default")}
               </Text>
             </HStack>
             <HStack padding={{ left: 32 }}>
@@ -116,10 +112,14 @@ function View(props: {
                 inputBehavior="multiline"
                 placeholder="Empty"
                 value={reply.text}
-                fontSize={15}
+                fontSize={18}
                 fill={props.env.textColor.alpha(0.8).hexa()}
                 onTextEditEnd={(e) => {
-                  props.nodes.set(reply.id, { ...reply, text: e.characters });
+                  props.nodes.set(reply.id, {
+                    ...reply,
+                    text: e.characters,
+                    updatedAt: Date.now(),
+                  });
                 }}
               />
             </HStack>
@@ -128,45 +128,50 @@ function View(props: {
       })}
 
       {/* make a reply */}
-      <HStack padding={{ left: 64 }}>
-        <Input
-          inputBehavior="multiline"
-          placeholder="Reply"
-          value={""}
-          fontSize={15}
-          fill={props.env.textColor.hexa()}
-          onTextEditEnd={(e) => {
-            if (e.characters === "") return;
+      <Conditional condition={showsReplyField}>
+        <HStack padding={{ left: 64 }}>
+          <Input
+            inputBehavior="multiline"
+            placeholder="Reply"
+            value={""}
+            fontSize={18}
+            fill={props.env.textColor.hexa()}
+            onTextEditEnd={(e) => {
+              if (e.characters === "") return;
 
-            const id = getTimestamp().toString();
-            props.nodes.set(props.node.id, {
-              ...props.node,
-              replies: [...props.node.replies, id],
-            });
-            props.nodes.set(id, {
-              userID: user.id,
-              id: id,
-              text: e.characters,
-              updatedAt: getTimestamp(),
-              replies: [],
-            });
-          }}
-        />
-      </HStack>
+              const id = Date.now().toString();
+              props.nodes.set(props.node.id, {
+                ...props.node,
+                replies: [...props.node.replies, id],
+              });
+              props.nodes.set(id, {
+                userID: user.id,
+                id: id,
+                text: e.characters,
+                updatedAt: Date.now(),
+                replies: [],
+              });
+            }}
+          />
+        </HStack>
+      </Conditional>
     </VStack>
   );
 }
 
 function Widget() {
-  const orange = Color("#f94b00");
+  const pink = Color("#fec7d7");
+  const orange = Color("#f25f4c");
   const purple = Color("#461a9c");
-  const keyColor = purple;
+  const keyColor = pink;
   const textColor =
     keyColor.contrast(whiteTextColor) > keyColor.contrast(blackTextColor)
       ? whiteTextColor
       : blackTextColor;
 
   const env: Environment = { keyColor, textColor };
+
+  console.log(Date.now());
 
   const nodes = useSyncedMap<Node>("node");
   const users = useSyncedMap<NodeUser>("user");
@@ -180,7 +185,7 @@ function Widget() {
         userID: user.id,
         id: "root",
         text: "",
-        updatedAt: getTimestamp(),
+        updatedAt: Date.now(),
         replies: [],
       };
 
@@ -192,7 +197,6 @@ function Widget() {
     return <VStack></VStack>;
   } else {
     // Basic usage
-    console.log(node.updatedAt, new Date(node.updatedAt).toUTCString());
     return View({ env, node, nodes, users });
   }
 }

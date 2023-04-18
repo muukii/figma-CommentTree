@@ -23,3 +23,7 @@ export const HStack = (props: AutoLayoutProps) => {
   composed.direction = "horizontal";
   return <AutoLayout {...composed} />;
 };
+
+export const Conditional = (props: { condition: boolean; children: any }) => {
+  return <>{props.condition ? props.children : null}</>;
+};
