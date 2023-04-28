@@ -86,9 +86,10 @@ function View(props: {
           fontSize={18}
           fill={props.env.textColor.alpha(0.8).hexa()}
           onTextEditEnd={(e) => {
+            const trimmed = e.characters.trim();
             props.nodes.set(props.node.id, {
               ...props.node,
-              text: e.characters,
+              text: trimmed,
             });
           }}
         />
@@ -115,9 +116,10 @@ function View(props: {
                 fontSize={18}
                 fill={props.env.textColor.alpha(0.8).hexa()}
                 onTextEditEnd={(e) => {
+                  const trimmed = e.characters.trim();
                   props.nodes.set(reply.id, {
                     ...reply,
-                    text: e.characters,
+                    text: trimmed,
                     updatedAt: Date.now(),
                   });
                 }}
@@ -137,7 +139,9 @@ function View(props: {
             fontSize={18}
             fill={props.env.textColor.hexa()}
             onTextEditEnd={(e) => {
-              if (e.characters === "") return;
+              const trimmed = e.characters.trim();
+
+              if (trimmed === "") return;
 
               const id = Date.now().toString();
               props.nodes.set(props.node.id, {
@@ -147,7 +151,7 @@ function View(props: {
               props.nodes.set(id, {
                 userID: user.id,
                 id: id,
-                text: e.characters,
+                text: trimmed,
                 updatedAt: Date.now(),
                 replies: [],
               });
@@ -170,8 +174,6 @@ function Widget() {
       : blackTextColor;
 
   const env: Environment = { keyColor, textColor };
-
-  console.log(Date.now());
 
   const nodes = useSyncedMap<Node>("node");
   const users = useSyncedMap<NodeUser>("user");
